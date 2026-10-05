@@ -145,11 +145,19 @@ def main():
     refresh_iso = refresh_from.isoformat().replace("+00:00", "Z")
 
     fresh = fetch_posts_since(refresh_from)
-    # Posts da janela são recalculados do zero (pega edição e post apagado).
-    state["posts"] = {k: v for k, v in state["posts"].items() if v["at"] < refresh_iso}
+    # Posts da janela são relidos (pega post apagado). Hashtag só vale se estiver
+    # no post até 23h59 do dia dele: de dias já encerrados, mantém o que foi guardado
+    # e ignora edição posterior.
+    today = now.astimezone(BRT).date().isoformat()
+    old = state["posts"]
+    state["posts"] = {k: v for k, v in old.items() if v["at"] < refresh_iso}
     for p in fresh:
         d = day_of(p["createdAt"])
-        if START_DAY <= d <= END_DAY:
+        if not START_DAY <= d <= END_DAY:
+            continue
+        if d < today and p["id"] in old:
+            state["posts"][p["id"]] = old[p["id"]]
+        else:
             state["posts"][p["id"]] = {"u": p["userId"], "at": p["createdAt"], "d": d,
                                        "tags": tags_of(p, d), "media": has_media(p)}
 

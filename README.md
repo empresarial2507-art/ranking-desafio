@@ -8,6 +8,7 @@ Aqui o ponto vem das metas do desafio, comprovadas por hashtag no post da comuni
 - `#rotina #alimentacao #treino #cardio #agua #autocuidado #sono #acerto`: 3 pts cada, 1x por dia, até 2 hashtags por post. Precisa de foto, menos `#acerto` e `#sono`.
 - Comentário com 10+ caracteres no post de outra aluna: 1 pt, até 10 por dia
 - Máximo de 44 pts por dia. Desempate: mais dias com check-in, depois mais comentários válidos (sem teto). O dia 05/10 (antes do anúncio das hashtags) foi pontuado lendo o texto dos posts (`KEYWORD_DAYS` em `calc.py`).
+- Hashtag só vale se estiver no post até 23h59 do dia dele (BRT). Posts de dias encerrados ficam congelados no `state.json`; edição posterior é ignorada.
 - Entram só membros do grupo do desafio na Cativa. Moderadoras e a conta da Paloma ficam de fora.
 
 ## Como funciona
