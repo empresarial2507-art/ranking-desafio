@@ -6,8 +6,8 @@ Aqui o ponto vem das metas do desafio, comprovadas por hashtag no post da comuni
 ## Regras (05 a 30/10/2026)
 - Check-in: 10 pts no dia (1º post com foto e hashtag do desafio)
 - `#rotina #alimentacao #treino #cardio #agua #autocuidado #sono #acerto`: 3 pts cada, 1x por dia, até 2 hashtags por post. Precisa de foto, menos `#acerto` e `#sono`.
-- Comentário com 10+ caracteres no post de outra aluna: 1 pt, até 4 por dia
-- Máximo de 38 pts por dia. O dia 05/10 (antes do anúncio das hashtags) foi pontuado lendo o texto dos posts (`KEYWORD_DAYS` em `calc.py`).
+- Comentário com 10+ caracteres no post de outra aluna: 1 pt, até 10 por dia
+- Máximo de 44 pts por dia. Desempate: mais dias com check-in, depois mais comentários válidos (sem teto). O dia 05/10 (antes do anúncio das hashtags) foi pontuado lendo o texto dos posts (`KEYWORD_DAYS` em `calc.py`).
 - Entram só membros do grupo do desafio na Cativa. Moderadoras e a conta da Paloma ficam de fora.
 
 ## Como funciona

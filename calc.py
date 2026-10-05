@@ -22,7 +22,7 @@ REFRESH_HOURS = 48  # posts e comentários mais novos que isso são relidos a ca
 CHECKIN_PTS = 10
 TAG_PTS = 3
 MAX_TAGS_PER_POST = 2
-COMMENT_PTS, COMMENT_MIN_CHARS, COMMENT_MAX_PER_DAY = 1, 10, 4
+COMMENT_PTS, COMMENT_MIN_CHARS, COMMENT_MAX_PER_DAY = 1, 10, 10
 TAGS = ["rotina", "alimentacao", "treino", "cardio", "agua", "autocuidado", "sono", "acerto"]
 NO_PHOTO_OK = {"acerto", "sono"}  # relato sem foto vale
 ALIASES = {"rotinamatinal": "rotina", "alimentacoes": "alimentacao", "treinos": "treino",
@@ -173,7 +173,7 @@ def main():
     excluded = {me.get("id")} | {uid for uid, m in members.items() if m.get("isModerator") or m.get("role") not in (0, "user")}
 
     # Pontuação
-    per = defaultdict(lambda: {"days": set(), "tags": defaultdict(int), "comments": 0})
+    per = defaultdict(lambda: {"days": set(), "tags": defaultdict(int), "comments": 0, "ncom": 0})
     by_day = defaultdict(list)
     for pid, p in state["posts"].items():
         by_day[(p["u"], p["d"])].append(p)
@@ -196,6 +196,7 @@ def main():
             com_day[(c["u"], c["d"])] += 1
     for (uid, d), n in com_day.items():
         per[uid]["comments"] += min(n, COMMENT_MAX_PER_DAY) * COMMENT_PTS
+        per[uid]["ncom"] += n  # só para desempate
 
     # Foto: quem ainda não tem, pega do detalhe de um post dela (uma vez só).
     need = [uid for uid in per if uid in members and uid not in excluded and uid not in state["pics"]]
@@ -221,11 +222,13 @@ def main():
             continue
         rows.append({"name": members[uid]["displayName"].strip(), "pic": state["pics"].get(uid) or "",
                      "pts": pts, "checkins": len(s["days"]), "tags": {t: s["tags"].get(t, 0) for t in TAGS},
-                     "comments": s["comments"]})
-    rows.sort(key=lambda r: (-r["pts"], norm(r["name"])))
+                     "comments": s["comments"], "ncom": s["ncom"]})
+    # Desempate: mais dias com check-in, depois mais comentários válidos (sem teto).
+    tie = lambda r: (r["pts"], r["checkins"], r["ncom"])
+    rows.sort(key=lambda r: (-r["pts"], -r["checkins"], -r["ncom"], norm(r["name"])))
     pos = 0
     for i, r in enumerate(rows):
-        if i == 0 or r["pts"] != rows[i - 1]["pts"]:
+        if i == 0 or tie(r) != tie(rows[i - 1]):
             pos = i + 1
         r["pos"] = pos
 

@@ -159,9 +159,10 @@
       <ul style="margin-top:12px">
         <li><b>Check-in do dia</b> (1º post com foto e hashtag) <span>10 pts</span></li>
         <li><b>Cada meta do dia</b> (hashtag) <span>3 pts</span></li>
-        <li><b>Comentar no post de uma colega</b> (até 4 por dia) <span>1 pt</span></li>
+        <li><b>Comentar no post de uma colega</b> (10+ letras, até 10 por dia) <span>1 pt</span></li>
       </ul>
-      <p>#acerto e #sono valem mesmo sem foto, como relato. Máximo de 38 pontos por dia: aqui vale constância!</p>
+      <p>#acerto e #sono valem mesmo sem foto, como relato. Máximo de 44 pontos por dia: aqui vale constância!</p>
+      <p><b style="color:var(--ink);font-weight:500">Empate?</b> Fica na frente quem fez check-in em mais dias e, depois, quem comentou mais nos posts das colegas.</p>
     </div>
   </details>
 
@@ -196,6 +197,7 @@ function detail(r, totalDays) {
     <div class="line"><span>Dias com check-in</span><b>${r.checkins} de ${totalDays}</b></div>
     <div class="chips">${chips}</div>
     <div class="line"><span>Pontos de comentários</span><b>${r.comments}</b></div>
+    <div class="line"><span>Comentários no total (desempate)</span><b>${r.ncom ?? 0}</b></div>
   </div>`;
 }
 
