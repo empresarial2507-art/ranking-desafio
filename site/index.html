@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Ranking do Desafio · LIFE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #c2286f;
+    --pink-dark: #9e1c59;
+    --pink-soft: #fbeef3;
+    --pink-line: #f1d3df;
+    --ink: #2b2226;
+    --muted: #7d6b73;
+    --bg: #fffafc;
+    --card: #ffffff;
+    --gold: #c99a2e;
+    --silver: #9aa3ad;
+    --bronze: #b07045;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overflow-x: hidden; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Poppins", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 48px; }
+
+  header {
+    text-align: center;
+    padding: 36px 16px 28px;
+    background: linear-gradient(180deg, var(--pink-soft), var(--bg));
+    border-bottom: 1px solid var(--pink-line);
+  }
+  .kicker { font-size: 11px; letter-spacing: .28em; text-transform: uppercase; color: var(--pink); font-weight: 600; }
+  h1 { font-family: "Lora", serif; font-weight: 400; font-style: italic; font-size: 30px; color: #6b5560; margin-top: 10px; }
+  h1 b { display: block; font-style: normal; font-weight: 500; font-size: 34px; letter-spacing: .06em; color: var(--pink); text-transform: uppercase; }
+  .meta { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .pill { background: var(--card); border: 1px solid var(--pink-line); border-radius: 999px; padding: 5px 12px; font-size: 12.5px; color: var(--muted); }
+  .pill strong { color: var(--pink); font-weight: 600; }
+
+  h2 {
+    font-family: "Lora", serif; font-weight: 500; font-size: 21px; color: var(--pink-dark);
+    margin: 30px 0 14px; display: flex; align-items: baseline; gap: 10px;
+  }
+  h2 small { font-family: "Poppins", sans-serif; font-size: 12px; color: var(--muted); font-weight: 400; }
+
+  .rules { margin-top: 20px; background: var(--card); border: 1px solid var(--pink-line); border-radius: 14px; }
+  .rules summary { cursor: pointer; padding: 13px 16px; font-weight: 500; color: var(--pink-dark); list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  .rules summary::-webkit-details-marker { display: none; }
+  .rules summary::after { content: "+"; font-size: 20px; line-height: 1; color: var(--pink); }
+  .rules[open] summary::after { content: "–"; }
+  .rules .body { padding: 0 16px 16px; font-size: 13.5px; color: var(--muted); }
+  .rules ul { list-style: none; display: grid; gap: 7px; }
+  .rules li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dashed var(--pink-line); padding-bottom: 7px; }
+  .rules li b { color: var(--ink); font-weight: 500; }
+  .rules li span { white-space: nowrap; color: var(--pink); font-weight: 600; }
+  .rules p { margin-top: 10px; }
+  .tagline { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 2px; }
+
+  .tag { display: inline-block; background: var(--pink-soft); color: var(--pink-dark); border-radius: 999px; padding: 3px 10px; font-size: 12.5px; font-weight: 500; }
+
+  /* Pódio */
+  .podium { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: end; }
+  .pod { background: var(--card); border: 1px solid var(--pink-line); border-radius: 16px; padding: 14px 8px 12px; text-align: center; cursor: pointer; }
+  .pod.p1 { order: 2; padding-top: 20px; border-color: var(--pink); box-shadow: 0 8px 24px rgba(194, 40, 111, .12); }
+  .pod.p2 { order: 1; }
+  .pod.p3 { order: 3; }
+  .pod .medal { font-size: 12px; font-weight: 600; letter-spacing: .1em; }
+  .pod .av { margin: 8px auto 8px; }
+  .pod.p1 .av { width: 72px; height: 72px; font-size: 24px; }
+  .pod .nm { font-size: 13px; font-weight: 500; line-height: 1.25; overflow-wrap: anywhere; }
+  .pod .pts { font-family: "Lora", serif; font-size: 22px; color: var(--pink); margin-top: 4px; }
+  .pod .pts small { font-family: "Poppins", sans-serif; font-size: 11px; color: var(--muted); }
+
+  .av {
+    width: 56px; height: 56px; border-radius: 50%; object-fit: cover; flex: none;
+    background: var(--pink-soft); color: var(--pink); display: grid; place-items: center;
+    font-weight: 600; font-size: 18px; border: 2px solid var(--card); box-shadow: 0 0 0 1.5px var(--pink-line);
+  }
+  .av.sm { width: 40px; height: 40px; font-size: 14px; }
+
+  /* Linhas */
+  .list { display: grid; gap: 8px; }
+  .row { background: var(--card); border: 1px solid var(--pink-line); border-radius: 14px; overflow: hidden; }
+  .row.top { border-color: #ecc3d5; }
+  .row button {
+    all: unset; box-sizing: border-box; width: 100%; cursor: pointer;
+    display: grid; grid-template-columns: 34px auto minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 14px 10px 10px;
+  }
+  .row button:focus-visible { outline: 2px solid var(--pink); outline-offset: -2px; border-radius: 14px; }
+  .pos { text-align: center; font-family: "Lora", serif; font-size: 17px; color: var(--muted); }
+  .row.top .pos { color: var(--pink); font-weight: 500; }
+  .name { min-width: 0; font-weight: 500; font-size: 14px; line-height: 1.25; overflow-wrap: anywhere; }
+  .score { font-family: "Lora", serif; font-size: 19px; color: var(--pink); text-align: right; }
+  .score small { display: block; font-family: "Poppins", sans-serif; font-size: 10.5px; color: var(--muted); margin-top: -2px; }
+  .detail { display: none; padding: 2px 14px 14px 14px; border-top: 1px dashed var(--pink-line); }
+  .row.open .detail, .pod-detail.open { display: block; }
+  .detail .line { display: flex; justify-content: space-between; font-size: 13px; padding: 8px 0 4px; color: var(--muted); }
+  .detail .line b { color: var(--ink); font-weight: 500; }
+  .chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 6px; margin-top: 6px; }
+  .chip { display: flex; justify-content: space-between; background: var(--pink-soft); border-radius: 10px; padding: 6px 10px; font-size: 12.5px; }
+  .chip b { color: var(--pink-dark); font-weight: 600; }
+  .chip.zero { background: #f7f3f5; color: #b3a5ac; }
+  .chip.zero b { color: #b3a5ac; }
+  .pod-detail { display: none; margin-top: 10px; background: var(--card); border: 1px solid var(--pink); border-radius: 14px; }
+  .pod-detail .detail { display: block; border-top: 0; padding-top: 6px; }
+  .pod-detail .who { padding: 12px 14px 0; font-weight: 500; color: var(--pink-dark); }
+
+  .empty, .err { text-align: center; color: var(--muted); padding: 40px 10px; }
+  footer { text-align: center; color: #b3a5ac; font-size: 11px; letter-spacing: .2em; margin-top: 36px; text-transform: uppercase; }
+
+  @media (max-width: 380px) {
+    h1 b { font-size: 28px; }
+    .pod .nm { font-size: 12px; }
+    .av { width: 48px; height: 48px; }
+    .pod.p1 .av { width: 60px; height: 60px; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">Desafio LIFE · Outubro</div>
+  <h1>Ranking do Desafio<b>Das Gostosas</b></h1>
+  <div class="meta">
+    <span class="pill" id="pill-day">Dia –</span>
+    <span class="pill" id="pill-upd">Carregando…</span>
+    <span class="pill" id="pill-count">–</span>
+  </div>
+</header>
+
+<main class="wrap">
+  <details class="rules">
+    <summary>Como pontuar</summary>
+    <div class="body">
+      <p style="margin:0 0 10px">Poste seus checks com foto e a hashtag da meta. Cada meta vale 1 vez por dia, e cada post vale até 2 hashtags.</p>
+      <div class="tagline">
+        <span class="tag">#rotina</span><span class="tag">#alimentacao</span><span class="tag">#treino</span><span class="tag">#cardio</span>
+        <span class="tag">#agua</span><span class="tag">#autocuidado</span><span class="tag">#sono</span><span class="tag">#acerto</span>
+      </div>
+      <ul style="margin-top:12px">
+        <li><b>Check-in do dia</b> (1º post com foto e hashtag) <span>10 pts</span></li>
+        <li><b>Cada meta do dia</b> (hashtag) <span>3 pts</span></li>
+        <li><b>Comentar no post de uma colega</b> (até 4 por dia) <span>1 pt</span></li>
+      </ul>
+      <p>#acerto e #sono valem mesmo sem foto, como relato. Máximo de 38 pontos por dia: aqui vale constância!</p>
+    </div>
+  </details>
+
+  <h2>Top 10 <small>toque no nome para ver os pontos</small></h2>
+  <div id="top"></div>
+
+  <h2>Classificação geral</h2>
+  <div class="list" id="all"></div>
+
+  <footer>LIFE · Método PLM</footer>
+</main>
+
+<script>
+const TAGS = [["rotina","Rotina"],["alimentacao","Alimentação"],["treino","Treino"],["cardio","Cardio"],["agua","Água"],["autocuidado","Autocuidado"],["sono","Sono"],["acerto","Acerto"]];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const initials = n => n.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase();
+const avatar = (r, cls = "") => r.pic
+  ? `<img class="av ${cls}" src="${esc(r.pic)}" alt="" loading="lazy" onerror="this.outerHTML='<div class=&quot;av ${cls}&quot;>${esc(initials(r.name))}</div>'">`
+  : `<div class="av ${cls}">${esc(initials(r.name))}</div>`;
+
+function detail(r, totalDays) {
+  const chips = TAGS.map(([k, label]) =>
+    `<div class="chip ${r.tags[k] ? "" : "zero"}"><span>#${k}</span><b>${r.tags[k]}x</b></div>`).join("");
+  return `<div class="detail">
+    <div class="line"><span>Dias com check-in</span><b>${r.checkins} de ${totalDays}</b></div>
+    <div class="chips">${chips}</div>
+    <div class="line"><span>Pontos de comentários</span><b>${r.comments}</b></div>
+  </div>`;
+}
+
+function render(d) {
+  const rows = d.ranking;
+  const upd = new Date(d.updatedAt);
+  document.getElementById("pill-day").innerHTML = `Dia <strong>${d.day}</strong> de ${d.totalDays}`;
+  document.getElementById("pill-upd").textContent = "Atualizado às " + upd.toLocaleTimeString("pt-BR", {hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo"});
+  document.getElementById("pill-count").innerHTML = `<strong>${rows.length}</strong> participantes`;
+  if (!rows.length) {
+    document.getElementById("top").innerHTML = '<div class="empty">Ainda sem pontos. Bora postar!</div>';
+    return;
+  }
+  const medal = ["", "1º", "2º", "3º"];
+  const podium = rows.slice(0, 3).map((r, i) => `
+    <div class="pod p${i + 1}" data-i="${i}" role="button" tabindex="0">
+      <div class="medal" style="color:var(--${["gold","silver","bronze"][r.pos - 1] || "pink"})">${r.pos}º</div>
+      ${avatar(r)}
+      <div class="nm">${esc(r.name)}</div>
+      <div class="pts">${r.pts} <small>pts</small></div>
+    </div>`).join("");
+  const rowHtml = (r, i, top) => `
+    <div class="row ${top ? "top" : ""}" data-i="${i}">
+      <button aria-expanded="false">
+        <span class="pos">${r.pos}º</span>
+        ${avatar(r, "sm")}
+        <span class="name">${esc(r.name)}</span>
+        <span class="score">${r.pts}<small>pts</small></span>
+      </button>
+      ${detail(r, d.day)}
+    </div>`;
+  const rest10 = rows.slice(3, 10).map((r, i) => rowHtml(r, i + 3, true)).join("");
+  document.getElementById("top").innerHTML =
+    `<div class="podium">${podium}</div><div class="pod-detail" id="podd"></div><div class="list" style="margin-top:10px">${rest10}</div>`;
+  document.getElementById("all").innerHTML = rows.length > 10
+    ? rows.slice(10).map((r, i) => rowHtml(r, i + 10, false)).join("")
+    : '<div class="empty">A classificação geral começa a partir da 11ª posição.</div>';
+
+  document.querySelectorAll(".row button").forEach(b => b.addEventListener("click", () => {
+    const row = b.parentElement;
+    const open = row.classList.toggle("open");
+    b.setAttribute("aria-expanded", open);
+  }));
+  const podd = document.getElementById("podd");
+  let shown = -1;
+  document.querySelectorAll(".pod").forEach(p => {
+    const show = () => {
+      const i = +p.dataset.i;
+      if (shown === i) { podd.classList.remove("open"); shown = -1; return; }
+      shown = i;
+      podd.innerHTML = `<div class="who">${rows[i].pos}º · ${esc(rows[i].name)}</div>${detail(rows[i], d.day)}`;
+      podd.classList.add("open");
+    };
+    p.addEventListener("click", show);
+    p.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); show(); } });
+  });
+}
+
+fetch("ranking.json?t=" + Date.now())
+  .then(r => r.json())
+  .then(render)
+  .catch(() => {
+    document.getElementById("pill-upd").textContent = "Sem conexão";
+    document.getElementById("top").innerHTML = '<div class="err">Não consegui carregar o ranking. Tente de novo em instantes.</div>';
+  });
+</script>
+</body>
+</html>

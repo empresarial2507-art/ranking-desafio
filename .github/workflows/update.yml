@@ -1,0 +1,54 @@
+name: Atualizar ranking
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: ranking
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # data/state.json fica só no cache do Actions, nunca no repositório.
+      - uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: state-${{ github.run_id }}
+          restore-keys: state-
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Calcular pontos
+        env:
+          CATIVA_API_KEY: ${{ secrets.CATIVA_API_KEY }}
+        run: python calc.py
+
+      - uses: actions/cache/save@v4
+        with:
+          path: data
+          key: state-${{ github.run_id }}
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4

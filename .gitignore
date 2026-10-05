@@ -1,0 +1,4 @@
+data/
+site/ranking.json
+__pycache__/
+.DS_Store
