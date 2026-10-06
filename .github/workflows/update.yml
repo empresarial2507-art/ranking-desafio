@@ -2,7 +2,7 @@ name: Atualizar ranking
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "7,37 * * * *"  # reserva; o disparo confiável vem de fora (ver README)
   workflow_dispatch:
   push:
     branches: [main]
@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy1.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -50,5 +50,12 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site
+      # O Pages às vezes devolve 502; tenta de novo antes de desistir.
+      - id: deploy1
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+      - if: steps.deploy1.outcome == 'failure'
+        run: sleep 60
       - id: deploy
+        if: steps.deploy1.outcome == 'failure'
         uses: actions/deploy-pages@v4
