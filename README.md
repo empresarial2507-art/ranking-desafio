@@ -16,7 +16,7 @@ Aqui o ponto vem das metas do desafio, comprovadas por hashtag no post da comuni
 - `data/state.json` guarda só ids, dia, hashtags e se tem foto. Fica no cache do GitHub Actions, nunca no repositório.
 - Gera `site/ranking.json`, que a página `site/index.html` lê.
 - GitHub Actions calcula e publica `site/` no GitHub Pages. Secret necessário: `CATIVA_API_KEY`.
-- **Disparo:** o cron do GitHub atrasa horas em repositório gratuito (em 06/10 rodou 1x a cada 5 a 7h). O disparo confiável vem do n8n do LIFE: fluxo `n8n-disparo-ranking.json` (Schedule 30 min → POST `actions/workflows/update.yml/dispatches`), com credencial Header Auth `Authorization: Bearer <token>`. Token: fine-grained PAT só deste repo, permissão Actions: read and write. O cron do workflow fica só de reserva.
+- **Disparo:** o cron do GitHub atrasa horas em repositório gratuito (em 06/10 rodou 1x a cada 5 a 7h). O disparo vem do Mac do Natan: launchd `com.life.ranking-desafio` roda `mac/disparar.sh` (`gh workflow run`) a cada 30 min enquanto o Mac está acordado; instalar com `mac/instalar.sh`, log em `~/.life-growth-os/ranking/disparos.log`. Para de disparar sozinho depois de 31/10. Alternativa que roda 24h: fluxo n8n `n8n-disparo-ranking.json` (PAT fine-grained só deste repo, Actions read/write). O cron do workflow fica de reserva.
 - O deploy no Pages tenta 2x (o Pages devolve 502 de vez em quando).
 
 Rodar local: `source ~/.cativa.env && CATIVA_API_KEY=$CATIVA_API_KEY python3 calc.py && cd site && python3 -m http.server`
