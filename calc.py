@@ -12,7 +12,6 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 BASE = "https://apis.cativalab.digital/tenant/api/v2"
-GROUP_ID = "cc16e22a-ce22-48f7-7e30-08defc87194e"  # Desafio Outubro das Gostosas
 START_DAY, END_DAY = "2026-10-05", "2026-10-30"
 BRT = timezone(timedelta(hours=-3))
 START_UTC = datetime(2026, 10, 5, tzinfo=BRT).astimezone(timezone.utc)
@@ -120,15 +119,9 @@ def fetch_comments(post_id):
     return []
 
 
-def fetch_members():
-    members, page = {}, 1
-    while True:
-        r = get(f"/community/groups/{GROUP_ID}/members?page={page}&pageSize=50")
-        for m in r.get("items") or []:
-            members[m["id"]] = m
-        if not r.get("hasNextPage"):
-            return members
-        page += 1
+def fetch_admins():
+    """Contas da equipe (Paloma, Time Life Oficial): ficam fora do ranking."""
+    return {u["id"] for u in get("/admin/users?page=1&pageSize=50&role=admin").get("items") or []}
 
 
 def main():
@@ -138,6 +131,7 @@ def main():
     state = {"posts": {}, "comments": {}, "pics": {}}
     if os.path.exists(STATE):
         state = json.load(open(STATE))
+    state.setdefault("names", {})
 
     refresh_from = max(START_UTC, now - timedelta(hours=REFRESH_HOURS))
     if not state["posts"]:
@@ -170,15 +164,16 @@ def main():
         author = state["posts"][pid]["u"]
         for c in comments:
             uid = c.get("userId") or (c.get("author") or {}).get("id")
-            pic = (c.get("author") or {}).get("pictureUrl")
-            if uid and pic:
-                state["pics"][uid] = pic
+            author_info = c.get("author") or {}
+            if uid and author_info.get("pictureUrl"):
+                state["pics"][uid] = author_info["pictureUrl"]
+            if uid and author_info.get("displayName"):
+                state["names"][uid] = author_info["displayName"].strip()
             state["comments"][c["id"]] = {"u": uid, "post": pid, "pu": author, "d": day_of(c["createdAt"]),
                                           "ok": len((c.get("content") or "").strip()) >= COMMENT_MIN_CHARS}
 
-    members = fetch_members()
-    me = get("/auth/me")
-    excluded = {me.get("id")} | {uid for uid, m in members.items() if m.get("isModerator") or m.get("role") not in (0, "user")}
+    # Entra quem postou com hashtag do desafio (não precisa estar no grupo da Cativa).
+    excluded = fetch_admins() | {get("/auth/me").get("id")}
 
     # Pontuação
     per = defaultdict(lambda: {"days": set(), "tags": defaultdict(int), "comments": 0, "ncom": 0})
@@ -206,29 +201,32 @@ def main():
         per[uid]["comments"] += min(n, COMMENT_MAX_PER_DAY) * COMMENT_PTS
         per[uid]["ncom"] += n  # só para desempate
 
-    # Foto: quem ainda não tem, pega do detalhe de um post dela (uma vez só).
-    need = [uid for uid in per if uid in members and uid not in excluded and uid not in state["pics"]]
+    participants = [uid for uid, s in per.items() if s["days"] and uid not in excluded]
+
+    # Nome e foto: quem ainda não tem, pega do detalhe de um post dela (uma vez só).
     some_post = {}
     for pid, p in state["posts"].items():
         some_post.setdefault(p["u"], pid)
+    need = [u for u in participants if (u not in state["names"] or u not in state["pics"]) and u in some_post]
 
-    def pic_for(uid):
+    def author_of(uid):
         try:
-            return uid, (get(f"/community/posts/{some_post[uid]}")["post"].get("author") or {}).get("pictureUrl")
+            return uid, get(f"/community/posts/{some_post[uid]}")["post"].get("author") or {}
         except Exception:
-            return uid, None
+            return uid, {}
     with ThreadPoolExecutor(8) as ex:
-        for uid, pic in ex.map(pic_for, [u for u in need if u in some_post]):
-            state["pics"][uid] = pic or ""
+        for uid, a in ex.map(author_of, need):
+            state["pics"][uid] = a.get("pictureUrl") or ""
+            if a.get("displayName"):
+                state["names"][uid] = a["displayName"].strip()
 
     rows = []
-    for uid, s in per.items():
-        if uid not in members or uid in excluded:
+    for uid in participants:
+        s = per[uid]
+        if uid not in state["names"]:
             continue
         pts = len(s["days"]) * CHECKIN_PTS + sum(s["tags"].values()) * TAG_PTS + s["comments"]
-        if pts <= 0:
-            continue
-        rows.append({"name": members[uid]["displayName"].strip(), "pic": state["pics"].get(uid) or "",
+        rows.append({"name": state["names"][uid], "pic": state["pics"].get(uid) or "",
                      "pts": pts, "checkins": len(s["days"]), "tags": {t: s["tags"].get(t, 0) for t in TAGS},
                      "comments": s["comments"], "ncom": s["ncom"]})
     # Desempate: mais dias com check-in, depois mais comentários válidos (sem teto).
@@ -249,7 +247,7 @@ def main():
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
     json.dump(state, open(STATE, "w"), separators=(",", ":"))
     print(f"posts={len(state['posts'])} comentários={len(state['comments'])} ranqueadas={len(rows)} "
-          f"janela={len(fresh)} membros={len(members)}")
+          f"janela={len(fresh)}")
 
 
 if __name__ == "__main__":

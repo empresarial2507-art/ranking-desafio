@@ -9,7 +9,7 @@ Aqui o ponto vem das metas do desafio, comprovadas por hashtag no post da comuni
 - Comentário com 10+ caracteres no post de outra aluna: 1 pt, até 10 por dia
 - Máximo de 44 pts por dia. Desempate: mais dias com check-in, depois mais comentários válidos (sem teto). O dia 05/10 (antes do anúncio das hashtags) foi pontuado lendo o texto dos posts (`KEYWORD_DAYS` em `calc.py`).
 - Hashtag só vale se estiver no post até 23h59 do dia dele (BRT). Posts de dias encerrados ficam congelados no `state.json`; edição posterior é ignorada.
-- Entram só membros do grupo do desafio na Cativa. Moderadoras e a conta da Paloma ficam de fora.
+- Entra quem fez pelo menos 1 check-in (post com foto e hashtag do desafio), esteja ou não no grupo do desafio na Cativa. Contas admin (Paloma, Time Life Oficial) ficam de fora.
 
 ## Como funciona
 - `calc.py` lê o feed pela API da Cativa (paginação por `beforeDate`), relê posts e comentários das últimas 48h a cada rodada e congela o que é mais antigo.
