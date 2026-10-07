@@ -6,7 +6,7 @@ site/ranking.json. Guarda em data/state.json só o que precisa para pontuar
 
 Uso: CATIVA_API_KEY=... python3 calc.py
 """
-import json, os, re, sys, time, unicodedata, urllib.request, urllib.parse, urllib.error
+import html, json, os, re, sys, time, unicodedata, urllib.request, urllib.parse, urllib.error
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
@@ -77,9 +77,25 @@ def has_media(p):
     return "<img" in h or "<video" in h or bool(p.get("images")) or bool(p.get("videos"))
 
 
+def text_of(p):
+    """Texto do post com as quebras de linha preservadas. O rawContent da Cativa cola
+    "#sono" + <div>Deixando</div> em "#sonoDeixando", e a hashtag se perde."""
+    h = p.get("htmlContent")
+    if h:
+        t = re.sub(r"<\s*/?\s*(br|div|p|li)\b[^>]*>", " ", h, flags=re.I)
+        return html.unescape(re.sub(r"<[^>]+>", "", t))
+    return p.get("rawContent") or p.get("content") or ""
+
+
+def glued(p):
+    """True se o texto bruto da Cativa colou a hashtag na palavra seguinte."""
+    raw = dict(p, htmlContent=None)
+    return tags_of(raw, "x") != tags_of(p, "x")
+
+
 def tags_of(p, day):
     """Hashtags válidas do post, na ordem em que aparecem, no máximo 2."""
-    text = p.get("rawContent") or p.get("content") or ""
+    text = text_of(p)
     found = []
     for raw in re.findall(r"#([^\s#.,!?;:()]+)", text):
         t = ALIASES.get(norm(raw), norm(raw))
@@ -149,7 +165,7 @@ def main():
         d = day_of(p["createdAt"])
         if not START_DAY <= d <= END_DAY:
             continue
-        if d < today and p["id"] in old:
+        if d < today and p["id"] in old and not glued(p):
             state["posts"][p["id"]] = old[p["id"]]
         else:
             state["posts"][p["id"]] = {"u": p["userId"], "at": p["createdAt"], "d": d,
