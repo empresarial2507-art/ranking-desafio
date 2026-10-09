@@ -15,6 +15,7 @@ BASE = "https://apis.cativalab.digital/tenant/api/v2"
 START_DAY, END_DAY = "2026-10-05", "2026-10-30"
 BRT = timezone(timedelta(hours=-3))
 START_UTC = datetime(2026, 10, 5, tzinfo=BRT).astimezone(timezone.utc)
+PARSE_VERSION = 2  # subir quando a leitura de hashtag mudar: força uma releitura completa uma vez
 REFRESH_HOURS = 48  # posts e comentários mais novos que isso são relidos a cada rodada
 
 # Regras
@@ -156,7 +157,7 @@ def main():
     state.setdefault("names", {})
 
     refresh_from = max(START_UTC, now - timedelta(hours=REFRESH_HOURS))
-    if not state["posts"]:
+    if not state["posts"] or state.get("parse_v") != PARSE_VERSION:
         refresh_from = START_UTC
     refresh_iso = refresh_from.isoformat().replace("+00:00", "Z")
 
@@ -267,6 +268,7 @@ def main():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(out, open(OUT, "w"), ensure_ascii=False, separators=(",", ":"))
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
+    state["parse_v"] = PARSE_VERSION
     json.dump(state, open(STATE, "w"), separators=(",", ":"))
     print(f"posts={len(state['posts'])} comentários={len(state['comments'])} ranqueadas={len(rows)} "
           f"janela={len(fresh)}")
