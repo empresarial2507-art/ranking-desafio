@@ -87,17 +87,23 @@ def text_of(p):
     return p.get("rawContent") or p.get("content") or ""
 
 
-def glued(p):
-    """True se o texto bruto da Cativa colou a hashtag na palavra seguinte."""
-    raw = dict(p, htmlContent=None)
-    return tags_of(raw, "x") != tags_of(p, "x")
+# Leitura antiga: texto bruto da Cativa e hashtag até o próximo espaço/pontuação ASCII.
+# Perdia "#sono…", "#sono❤️" (símbolo colado) e "#sono" + Enter + texto (linha colada).
+LEGACY_TAG_RE = re.compile(r"#([^\s#.,!?;:()]+)")
+TAG_RE = re.compile(r"#([A-Za-zÀ-ÖØ-öø-ÿ0-9_]+)")  # só letras/números: para antes de …, emoji etc.
 
 
-def tags_of(p, day):
+def misread(p):
+    """True se a leitura antiga errava neste post. Só esses posts de dias já encerrados
+    são relidos; edição de hashtag (que as duas leituras enxergam igual) continua ignorada."""
+    return tags_of(p, "x") != tags_of(p, "x", legacy=True)
+
+
+def tags_of(p, day, legacy=False):
     """Hashtags válidas do post, na ordem em que aparecem, no máximo 2."""
-    text = text_of(p)
+    text = (p.get("rawContent") or p.get("content") or "") if legacy else text_of(p)
     found = []
-    for raw in re.findall(r"#([^\s#.,!?;:()]+)", text):
+    for raw in (LEGACY_TAG_RE if legacy else TAG_RE).findall(text):
         t = ALIASES.get(norm(raw), norm(raw))
         if t in TAGS and t not in found:
             found.append(t)
@@ -165,7 +171,7 @@ def main():
         d = day_of(p["createdAt"])
         if not START_DAY <= d <= END_DAY:
             continue
-        if d < today and p["id"] in old and not glued(p):
+        if d < today and p["id"] in old and not misread(p):
             state["posts"][p["id"]] = old[p["id"]]
         else:
             state["posts"][p["id"]] = {"u": p["userId"], "at": p["createdAt"], "d": d,
