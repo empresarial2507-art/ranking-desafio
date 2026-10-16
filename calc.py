@@ -15,7 +15,8 @@ BASE = "https://apis.cativalab.digital/tenant/api/v2"
 START_DAY, END_DAY = "2026-10-05", "2026-10-30"
 BRT = timezone(timedelta(hours=-3))
 START_UTC = datetime(2026, 10, 5, tzinfo=BRT).astimezone(timezone.utc)
-PARSE_VERSION = 2  # subir quando a leitura de hashtag mudar: força uma releitura completa uma vez
+PARSE_VERSION = 3  # subir quando a leitura de hashtag mudar: força uma releitura completa uma vez
+GRACE_HOURS = 3  # o dia só congela 3h depois da meia-noite (folga p/ rodadas atrasadas e edição de última hora)
 REFRESH_HOURS = 48  # posts e comentários mais novos que isso são relidos a cada rodada
 
 # Regras
@@ -100,12 +101,33 @@ def misread(p):
     return tags_of(p, "x") != tags_of(p, "x", legacy=True)
 
 
+def _dist(a, b):
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+def canon_tag(tok):
+    """Hashtag oficial a partir do que a aluna digitou. Só erro de digitação óbvio:
+    até 2 letras trocadas nas hashtags longas (alimentacao, autocuidado) e 1 nas de 6
+    letras. Sinônimo (#almoco, #cafe) não conta, e hashtag curta (agua, sono) é exata."""
+    t = ALIASES.get(tok, tok)
+    if t in TAGS or len(t) < 5:
+        return t
+    near = [g for g in TAGS if len(g) >= 6 and _dist(t, g) <= (2 if len(g) >= 10 else 1)]
+    return near[0] if len(near) == 1 else t
+
+
 def tags_of(p, day, legacy=False):
     """Hashtags válidas do post, na ordem em que aparecem, no máximo 2."""
     text = (p.get("rawContent") or p.get("content") or "") if legacy else text_of(p)
     found = []
     for raw in (LEGACY_TAG_RE if legacy else TAG_RE).findall(text):
-        t = ALIASES.get(norm(raw), norm(raw))
+        t = ALIASES.get(norm(raw), norm(raw)) if legacy else canon_tag(norm(raw))
         if t in TAGS and t not in found:
             found.append(t)
     if not found and day in KEYWORD_DAYS:
@@ -165,14 +187,14 @@ def main():
     # Posts da janela são relidos (pega post apagado). Hashtag só vale se estiver
     # no post até 23h59 do dia dele: de dias já encerrados, mantém o que foi guardado
     # e ignora edição posterior.
-    today = now.astimezone(BRT).date().isoformat()
+    freeze_before = (now - timedelta(hours=GRACE_HOURS)).astimezone(BRT).date().isoformat()
     old = state["posts"]
     state["posts"] = {k: v for k, v in old.items() if v["at"] < refresh_iso}
     for p in fresh:
         d = day_of(p["createdAt"])
         if not START_DAY <= d <= END_DAY:
             continue
-        if d < today and p["id"] in old and not misread(p):
+        if d < freeze_before and p["id"] in old and not misread(p):
             state["posts"][p["id"]] = old[p["id"]]
         else:
             state["posts"][p["id"]] = {"u": p["userId"], "at": p["createdAt"], "d": d,
