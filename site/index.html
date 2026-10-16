@@ -163,7 +163,7 @@
       </ul>
       <p>A hashtag precisa estar no post até as 23h59 do mesmo dia. Editar post de dias anteriores não conta.</p>
       <p>#acerto e #sono valem mesmo sem foto, como relato. Máximo de 44 pontos por dia: aqui vale constância!</p>
-      <p><b style="color:var(--ink);font-weight:500">Empate?</b> Fica na frente quem fez check-in em mais dias e, depois, quem comentou mais nos posts das colegas.</p>
+      <p><b style="color:var(--ink);font-weight:500">Empatou?</b> Fica na frente quem postou em mais dias. Se ainda assim empatar, as duas ficam na mesma posição.</p>
     </div>
   </details>
 
@@ -198,7 +198,6 @@ function detail(r, totalDays) {
     <div class="line"><span>Dias com check-in</span><b>${r.checkins} de ${totalDays}</b></div>
     <div class="chips">${chips}</div>
     <div class="line"><span>Pontos de comentários</span><b>${r.comments}</b></div>
-    <div class="line"><span>Comentários no total (desempate)</span><b>${r.ncom ?? 0}</b></div>
   </div>`;
 }
 

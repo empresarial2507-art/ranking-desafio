@@ -252,9 +252,10 @@ def main():
         rows.append({"name": state["names"][uid], "pic": state["pics"].get(uid) or "",
                      "pts": pts, "checkins": len(s["days"]), "tags": {t: s["tags"].get(t, 0) for t in TAGS},
                      "comments": s["comments"], "ncom": s["ncom"]})
-    # Desempate: mais dias com check-in, depois mais comentários válidos (sem teto).
-    tie = lambda r: (r["pts"], r["checkins"], r["ncom"])
-    rows.sort(key=lambda r: (-r["pts"], -r["checkins"], -r["ncom"], norm(r["name"])))
+    # Desempate, como no documento oficial das alunas: "Empatou? Fica na frente quem
+    # postou em mais dias". Persistindo o empate, mesma posição (nome só ordena a lista).
+    tie = lambda r: (r["pts"], r["checkins"])
+    rows.sort(key=lambda r: (-r["pts"], -r["checkins"], norm(r["name"])))
     pos = 0
     for i, r in enumerate(rows):
         if i == 0 or tie(r) != tie(rows[i - 1]):
