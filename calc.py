@@ -15,7 +15,7 @@ BASE = "https://apis.cativalab.digital/tenant/api/v2"
 START_DAY, END_DAY = "2026-10-05", "2026-10-30"
 BRT = timezone(timedelta(hours=-3))
 START_UTC = datetime(2026, 10, 5, tzinfo=BRT).astimezone(timezone.utc)
-PARSE_VERSION = 3  # subir quando a leitura de hashtag mudar: força uma releitura completa uma vez
+PARSE_VERSION = 4  # subir quando a leitura de hashtag mudar: força uma releitura completa uma vez
 GRACE_HOURS = 3  # o dia só congela 3h depois da meia-noite (folga p/ rodadas atrasadas e edição de última hora)
 REFRESH_HOURS = 48  # posts e comentários mais novos que isso são relidos a cada rodada
 
@@ -122,6 +122,23 @@ def canon_tag(tok):
     return near[0] if len(near) == 1 else t
 
 
+# "Hashtag vale para o que foi feito": "não teve #treino", "sem #cardio", "#treino não rolou"
+# não pontuam aquela hashtag. Só negação colada na hashtag; "#acerto sem açúcar" continua valendo.
+_NEG_VERB = r"(?:teve|tem|tive|tivemos|houve|rolou|fiz|fez|fui|vai ter|vou ter|consegui|deu|aconteceu)"
+_LISTA = r"((?:#[a-z0-9_]+(?:\s*(?:,|e nem|nem|e|ou)\s*)?)+)"  # "#treino e #cardio", "#treino, #cardio"
+_NEG_BEFORE = re.compile(r"\b(?:nao|sem)\s+(?:" + _NEG_VERB + r"\s+)?" + _LISTA)
+_NEG_AFTER = re.compile(_LISTA + r"\s*(?:de hoje\s+|hoje\s+)?nao\s+(?:teve|houve|rolou|aconteceu|deu|fiz|fui|vai ter|vou ter)\b")
+
+
+def negated_tags(text):
+    t = norm(text)
+    out = set()
+    for rx in (_NEG_BEFORE, _NEG_AFTER):
+        for m in rx.finditer(t):
+            out.update(canon_tag(ALIASES.get(x, x)) for x in re.findall(r"#([a-z0-9_]+)", m.group(1)))
+    return out
+
+
 def tags_of(p, day, legacy=False):
     """Hashtags válidas do post, na ordem em que aparecem, no máximo 2."""
     text = (p.get("rawContent") or p.get("content") or "") if legacy else text_of(p)
@@ -130,6 +147,11 @@ def tags_of(p, day, legacy=False):
         t = ALIASES.get(norm(raw), norm(raw)) if legacy else canon_tag(norm(raw))
         if t in TAGS and t not in found:
             found.append(t)
+    if not legacy and found:
+        negated = negated_tags(text)
+        found = [t for t in found if t not in negated]
+        if not found:
+            return []
     if not found and day in KEYWORD_DAYS:
         t = norm(text)
         hits = sorted((m.start(), tag) for tag, rx in KEYWORD_RE.items() if (m := rx.search(t)))
