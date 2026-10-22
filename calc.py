@@ -15,7 +15,7 @@ BASE = "https://apis.cativalab.digital/tenant/api/v2"
 START_DAY, END_DAY = "2026-10-05", "2026-10-30"
 BRT = timezone(timedelta(hours=-3))
 START_UTC = datetime(2026, 10, 5, tzinfo=BRT).astimezone(timezone.utc)
-PARSE_VERSION = 4  # subir quando a leitura de hashtag mudar: força uma releitura completa uma vez
+PARSE_VERSION = 5  # subir quando a leitura de hashtag mudar: força uma releitura completa uma vez
 GRACE_HOURS = 3  # o dia só congela 3h depois da meia-noite (folga p/ rodadas atrasadas e edição de última hora)
 REFRESH_HOURS = 48  # posts e comentários mais novos que isso são relidos a cada rodada
 
@@ -127,7 +127,8 @@ def canon_tag(tok):
 _NEG_VERB = r"(?:teve|tem|tive|tivemos|houve|rolou|fiz|fez|fui|vai ter|vou ter|consegui|deu|aconteceu)"
 _LISTA = r"((?:#[a-z0-9_]+(?:\s*(?:,|e nem|nem|e|ou)\s*)?)+)"  # "#treino e #cardio", "#treino, #cardio"
 _NEG_BEFORE = re.compile(r"\b(?:nao|sem)\s+(?:" + _NEG_VERB + r"\s+)?" + _LISTA)
-_NEG_AFTER = re.compile(_LISTA + r"\s*(?:de hoje\s+|hoje\s+)?nao\s+(?:teve|houve|rolou|aconteceu|deu|fiz|fui|vai ter|vou ter)\b")
+# "#cardio hoje não teve #treino": o "não teve" é do #treino que vem depois, não do #cardio.
+_NEG_AFTER = re.compile(_LISTA + r"\s*(?:de hoje\s+|hoje\s+)?nao\s+(?:teve|houve|rolou|aconteceu|deu|fiz|fui|vai ter|vou ter)\b(?!\s*#)")
 
 
 def negated_tags(text):
