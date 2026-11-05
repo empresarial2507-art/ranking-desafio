@@ -1,4 +1,4 @@
-"""Ranking do Desafio Outubro das Gostosas (LIFE).
+"""Ranking do Desafio Fim de Ano das Gostosas (LIFE, 16/11 a 18/12/2026).
 
 Lê o feed da comunidade na Cativa, pontua pelas regras do desafio e gera
 site/ranking.json. Guarda em data/state.json só o que precisa para pontuar
@@ -12,9 +12,10 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
 BASE = "https://apis.cativalab.digital/tenant/api/v2"
-START_DAY, END_DAY = "2026-10-05", "2026-10-30"
+START_DAY, END_DAY = "2026-11-16", "2026-12-18"
+CHALLENGE = "2026-fim-de-ano"  # trocou o desafio? o state antigo é descartado
 BRT = timezone(timedelta(hours=-3))
-START_UTC = datetime(2026, 10, 5, tzinfo=BRT).astimezone(timezone.utc)
+START_UTC = datetime(2026, 11, 16, tzinfo=BRT).astimezone(timezone.utc)
 PARSE_VERSION = 5  # subir quando a leitura de hashtag mudar: força uma releitura completa uma vez
 GRACE_HOURS = 3  # o dia só congela 3h depois da meia-noite (folga p/ rodadas atrasadas e edição de última hora)
 REFRESH_HOURS = 48  # posts e comentários mais novos que isso são relidos a cada rodada
@@ -23,14 +24,15 @@ REFRESH_HOURS = 48  # posts e comentários mais novos que isso são relidos a ca
 CHECKIN_PTS = 10
 TAG_PTS = 3
 MAX_TAGS_PER_POST = 2
+MAX_POSTS_PER_DAY = 20  # documento de novembro: "limite de até 20 posts por dia"; do 21º em diante não pontua
 COMMENT_PTS, COMMENT_MIN_CHARS, COMMENT_MAX_PER_DAY = 1, 10, 10
 TAGS = ["rotina", "alimentacao", "treino", "cardio", "agua", "autocuidado", "sono", "acerto"]
-NO_PHOTO_OK = {"acerto", "sono"}  # relato sem foto vale
+NO_PHOTO_OK = set()  # desde novembro toda hashtag precisa de foto, inclusive #acerto e #sono
 ALIASES = {"rotinamatinal": "rotina", "alimentacoes": "alimentacao", "treinos": "treino",
            "acertos": "acerto", "aguas": "agua"}
 
 # Dias antes do anúncio das hashtags: pontua lendo o texto, uma vez só.
-KEYWORD_DAYS = {"2026-10-05"}
+KEYWORD_DAYS = set()  # outubro: {"2026-10-05"}; em novembro as hashtags valem desde o 1º dia
 KEYWORDS = {
     "rotina": r"lingua|vac+u+m|jejum|shot|sol\b|rotina matinal|morning",
     "alimentacao": r"marmita|almoc|jantar|janta\b|cafe da manha|colacao|lanche|refeic|salada|ceia|prato|balanca|pesei|suco verde|plano alimentar",
@@ -199,6 +201,8 @@ def main():
     state = {"posts": {}, "comments": {}, "pics": {}}
     if os.path.exists(STATE):
         state = json.load(open(STATE))
+    if state.get("challenge") != CHALLENGE:  # state do desafio anterior: começa do zero (mantém nome e foto)
+        state = {"posts": {}, "comments": {}, "pics": state.get("pics", {}), "names": state.get("names", {})}
     state.setdefault("names", {})
 
     refresh_from = max(START_UTC, now - timedelta(hours=REFRESH_HOURS))
@@ -247,9 +251,11 @@ def main():
     per = defaultdict(lambda: {"days": set(), "tags": defaultdict(int), "comments": 0, "ncom": 0})
     by_day = defaultdict(list)
     for pid, p in state["posts"].items():
-        by_day[(p["u"], p["d"])].append(p)
+        if START_DAY <= p["d"] <= END_DAY:
+            by_day[(p["u"], p["d"])].append(p)
     for (uid, d), posts in by_day.items():
         posts.sort(key=lambda p: p["at"])
+        posts = posts[:MAX_POSTS_PER_DAY]
         done = set()
         checkin = False
         for p in posts:
@@ -297,9 +303,10 @@ def main():
         rows.append({"name": state["names"][uid], "pic": state["pics"].get(uid) or "",
                      "pts": pts, "checkins": len(s["days"]), "tags": {t: s["tags"].get(t, 0) for t in TAGS},
                      "comments": s["comments"], "ncom": s["ncom"]})
-    # Desempate, como no documento oficial das alunas: "Empatou? Fica na frente quem
-    # postou em mais dias". Persistindo o empate, mesma posição (nome só ordena a lista).
-    tie = lambda r: (r["pts"], r["checkins"])
+    # Desempate (documento de novembro): "vence quem teve maior quantidade e qualidade nos
+    # posts, relatos e comentários", avaliação da equipe. No painel, mesmos pontos = mesma
+    # posição; dias com check-in e nome só ordenam a lista.
+    tie = lambda r: r["pts"]
     rows.sort(key=lambda r: (-r["pts"], -r["checkins"], norm(r["name"])))
     pos = 0
     for i, r in enumerate(rows):
@@ -309,12 +316,14 @@ def main():
 
     today = min(now.astimezone(BRT).date().isoformat(), END_DAY)
     total_days = (datetime.fromisoformat(today) - datetime.fromisoformat(START_DAY)).days + 1
-    out = {"updatedAt": now.isoformat().replace("+00:00", "Z"), "day": max(total_days, 1),
-           "totalDays": 26, "ranking": rows}
+    span = (datetime.fromisoformat(END_DAY) - datetime.fromisoformat(START_DAY)).days + 1
+    out = {"updatedAt": now.isoformat().replace("+00:00", "Z"), "day": max(total_days, 0),
+           "totalDays": span, "start": START_DAY, "end": END_DAY, "ranking": rows}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(out, open(OUT, "w"), ensure_ascii=False, separators=(",", ":"))
     os.makedirs(os.path.dirname(STATE), exist_ok=True)
     state["parse_v"] = PARSE_VERSION
+    state["challenge"] = CHALLENGE
     json.dump(state, open(STATE, "w"), separators=(",", ":"))
     print(f"posts={len(state['posts'])} comentários={len(state['comments'])} ranqueadas={len(rows)} "
           f"janela={len(fresh)}")

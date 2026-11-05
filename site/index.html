@@ -139,7 +139,7 @@
 </head>
 <body>
 <header>
-  <div class="kicker">Desafio LIFE · Outubro</div>
+  <div class="kicker">Desafio Fim de Ano · 16/11 a 18/12</div>
   <h1>Ranking do Desafio<b>Das Gostosas</b></h1>
   <div class="meta">
     <span class="pill" id="pill-day">Dia –</span>
@@ -153,20 +153,21 @@
   <details class="rules">
     <summary>Como pontuar</summary>
     <div class="body">
-      <p style="margin:0 0 10px">Poste seus checks com foto e a hashtag da meta. Cada meta vale 1 vez por dia, e cada post vale até 2 hashtags.</p>
+      <p style="margin:0 0 10px">Poste seus checks com foto atual, descrição e a hashtag da meta. Cada meta vale 1 vez por dia, e cada post vale até 2 hashtags. Contam só os posts de 16/11 a 18/12.</p>
       <div class="tagline">
         <span class="tag">#rotina</span><span class="tag">#alimentacao</span><span class="tag">#treino</span><span class="tag">#cardio</span>
         <span class="tag">#agua</span><span class="tag">#autocuidado</span><span class="tag">#sono</span><span class="tag">#acerto</span>
       </div>
       <ul style="margin-top:12px">
-        <li><b>Check-in do dia</b> (1º post com foto e hashtag) <span>10 pts</span></li>
+        <li><b>1º post do dia</b> (com foto e hashtag) <span>10 pts</span></li>
         <li><b>Cada meta do dia</b> (hashtag) <span>3 pts</span></li>
         <li><b>Comentar no post de uma colega</b> (10+ letras, até 10 por dia) <span>1 pt</span></li>
       </ul>
       <p>A hashtag vale para o que você fez: se o post disser que não teve (ex.: "não teve #treino", "sem #cardio"), aquela hashtag não conta.</p>
       <p>A hashtag precisa estar no post até as 23h59 do mesmo dia, com uma pequena tolerância depois da meia-noite. Editar post de dias anteriores não conta. Pequenos erros de digitação (ex.: #alimetacao) são reconhecidos.</p>
-      <p>#acerto e #sono valem mesmo sem foto, como relato. Máximo de 44 pontos por dia: aqui vale constância!</p>
-      <p><b style="color:var(--ink);font-weight:500">Empatou?</b> Fica na frente quem postou em mais dias. Se ainda assim empatar, as duas ficam na mesma posição.</p>
+      <p>Todas as hashtags precisam de foto, inclusive #acerto e #sono. Foto atual, sem repetir foto. Comentário no seu próprio post não conta. Limite de 20 posts por dia. Máximo de 44 pontos por dia: aqui vale constância!</p>
+      <p><b style="color:var(--ink);font-weight:500">Empatou?</b> As duas ficam na mesma posição, e vence quem teve maior quantidade e qualidade nos posts, relatos e comentários.</p>
+      <p><b style="color:var(--ink);font-weight:500">Decisão final:</b> a equipe confere os posts (hashtag sem cumprir a meta e foto repetida ou antiga perdem os pontos) e soma a pontuação extra das fotos de antes e depois e dos relatos.</p>
     </div>
   </details>
 
@@ -207,11 +208,16 @@ function detail(r, totalDays) {
 function render(d) {
   const rows = d.ranking;
   const upd = new Date(d.updatedAt);
-  document.getElementById("pill-day").innerHTML = `Dia <strong>${d.day}</strong> de ${d.totalDays}`;
+  const notStarted = d.day < 1;
+  document.getElementById("pill-day").innerHTML = notStarted
+    ? `Começa dia <strong>16/11</strong>`
+    : `Dia <strong>${d.day}</strong> de ${d.totalDays}`;
   document.getElementById("pill-upd").textContent = "Atualizado às " + upd.toLocaleTimeString("pt-BR", {hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo"});
   document.getElementById("pill-count").innerHTML = `<strong>${rows.length}</strong> participantes`;
   if (!rows.length) {
-    document.getElementById("top").innerHTML = '<div class="empty">Ainda sem pontos. Bora postar!</div>';
+    document.getElementById("top").innerHTML = notStarted
+      ? '<div class="empty">O ranking começa dia 16/11. Os pontos contam só de 16/11 a 18/12.</div>'
+      : '<div class="empty">Ainda sem pontos. Bora postar!</div>';
     return;
   }
   const medal = ["", "1º", "2º", "3º"];

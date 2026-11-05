@@ -4,8 +4,10 @@
 GH=/Users/natancarvalhoguedes/.local/bin/gh
 REPO=empresarial2507-art/ranking-desafio
 
-# Desafio acabou em 30/10: depois de 31/10 não faz nada.
-[ "$(date +%Y%m%d)" -gt 20261031 ] && exit 0
+# Desafio Fim de Ano: 16/11 a 18/12. O dia 18 só congela 3h depois da meia-noite,
+# então dispara de 16/11 até 19/12; fora disso não faz nada.
+HOJE="$(date +%Y%m%d)"
+{ [ "$HOJE" -lt 20261116 ] || [ "$HOJE" -gt 20261219 ]; } && exit 0
 
 for tentativa in 1 2 3; do
   if "$GH" workflow run update.yml -R "$REPO" --ref main >/dev/null 2>&1; then
