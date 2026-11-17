@@ -1,0 +1,48 @@
+name: Relógio do ranking
+
+# Dispara "Atualizar ranking" a cada 30 min sem depender do Mac.
+# Um job fica de pé ~5h30 (o limite do Actions é 6h), dispara a atualização a cada
+# 30 min e, no fim, dispara a si mesmo: a corrente não para. workflow_dispatch feito
+# com o GITHUB_TOKEN cria run nova (é a exceção da regra do GitHub).
+# O cron abaixo é só reserva: se a corrente quebrar, ele religa (com atraso de horas).
+# O concurrency garante um relógio por vez.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 */3 * * *"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: relogio
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Disparar a cada 30 min
+        run: |
+          # Desafio Fim de Ano: 16/11 a 18/12. O dia 18 congela 3h depois da meia-noite,
+          # então dispara até 19/12 (BRT). Fora disso, não faz nada e não religa.
+          no_periodo() { h=$(TZ=America/Sao_Paulo date +%Y%m%d); [ "$h" -ge 20261116 ] && [ "$h" -le 20261219 ]; }
+          for i in $(seq 1 11); do
+            no_periodo || { echo "fora do período"; exit 0; }
+            gh workflow run update.yml -R "$REPO" --ref main && echo "$(TZ=America/Sao_Paulo date '+%d/%m %H:%M') disparo $i ok" || echo "disparo $i falhou"
+            [ "$i" -lt 11 ] && sleep 1800
+          done
+
+      - name: Religar o relógio
+        if: always()
+        run: |
+          h=$(TZ=America/Sao_Paulo date +%Y%m%d)
+          if [ "$h" -le 20261219 ]; then
+            gh workflow run relogio.yml -R "$REPO" --ref main
+          fi
